@@ -22,11 +22,13 @@
 
 const int analogInPin = A0;  // Analog input
 const int PIN_COUNT = 6;
-const int SAMPLE_COUNT = 5;
+const int SAMPLE_COUNT = 2;
 
 const int pin[PIN_COUNT] = {2, 3, 4, 5, 6, 7};
 const float r1[PIN_COUNT] = {100.0, 1000.0, 10000.0, 100000.0, 390000.0, 1000000.0};
 
+int buttonState = 0;
+bool mode = 0;
 
 void setup() {
   // initialize serial communications at 9600 bps:
@@ -36,7 +38,11 @@ void setup() {
      pinMode(pin[i], OUTPUT);
      digitalWrite(pin[i],LOW);
   }
-  
+  pinMode(13, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(12, INPUT);
+  Serial.println("OHM-METER MODE");
+  delay(5);
 }
 
 // take SAMPLE_COUNT succesive readings of the voltage and average them
@@ -69,28 +75,59 @@ void loop() {
    /* loop through finding the best estimate
       which we'll get when the measured voltage is closest
       to 1.65v  */
-   for (int i=0; i<PIN_COUNT; i++) {  
-     clearem();  
-     pinMode(pin[i], OUTPUT);
-     digitalWrite(pin[i],HIGH);
-     float v = averageVoltage();
-     Serial.println(v);
-     digitalWrite(pin[i],LOW);     
-     pinMode(pin[i], INPUT);
-     float difference = abs(v-2.5);
-     //Serial.println(difference);
-     if (5.0 > v && difference <= minimum) {
-        minimum = difference;
-        resistance = calculateResistance(r1[i], v);
-     }
-   } 
+   buttonState = digitalRead(12);
 
-   if (resistance >= 20000000){
-    Serial.println("Open Circuit...");
+   if (buttonState == LOW) {
+     //Serial.println(mode);
+     mode = !mode;
+     if (mode == 0) Serial.println("OHM-METER MODE");
+     else Serial.println("CONDUCTIVITY SENSOR MODE");
+     delay(1000);
+   }
+
+   if (mode == 0){
+     for (int i=0; i<PIN_COUNT; i++) {  
+       //clearem(); 
+       pinMode(pin[i], OUTPUT);
+       digitalWrite(pin[i],HIGH);
+       float v = averageVoltage();
+       //Serial.println(v);
+       digitalWrite(pin[i],LOW);     
+       pinMode(pin[i], INPUT);
+       float difference = abs(v-2.5);
+       //Serial.println(difference);
+       if (5.0 > v && difference <= minimum) {
+          minimum = difference;
+          resistance = calculateResistance(r1[i], v);
+       }
+     } 
+  
+     if (resistance >= 20000000){
+      digitalWrite(13, LOW);    
+      Serial.println("Open Circuit...");
+     }
+     else{
+       digitalWrite(13, HIGH);    
+       Serial.print("resistance = ");
+       Serial.println(resistance);
+     }
+     delay(100);
    }
    else{
-     Serial.print("resistance = ");
-     Serial.println(resistance);
+     pinMode(7, OUTPUT);
+     digitalWrite(7,HIGH);
+     float v = averageVoltage();
+     //Serial.println(v);
+     digitalWrite(7,LOW);     
+     pinMode(7, INPUT);   
+     if (v <= 4.70){
+      digitalWrite(11,HIGH);
+     }
+     else{
+      digitalWrite(11,LOW);
+     }
+     //Serial.println(v);
+     //delay(500); 
    }
-   delay(3000);
+   delay(1);
 } 
