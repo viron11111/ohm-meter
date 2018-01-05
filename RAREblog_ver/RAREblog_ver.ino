@@ -28,7 +28,7 @@ const int pin[PIN_COUNT] = {2, 3, 4, 5, 6, 7};
 const float r1[PIN_COUNT] = {100.0, 1000.0, 10000.0, 100000.0, 390000.0, 1000000.0};
 
 int buttonState = 0;
-bool mode = 0;
+bool mode = 1;
 
 void setup() {
   // initialize serial communications at 9600 bps:
@@ -41,8 +41,20 @@ void setup() {
   pinMode(13, OUTPUT);
   pinMode(11, OUTPUT);
   pinMode(12, INPUT);
-  Serial.println("OHM-METER MODE");
+  digitalWrite(11,LOW);
+  //Serial.println("OHM-METER MODE");
+  Serial.println("CONDUCTIVITY SENSOR MODE");
   delay(5);
+
+  for (int i=0; i<PIN_COUNT; i++) {  
+    pinMode(pin[i], OUTPUT);
+    digitalWrite(pin[i],HIGH);
+    //float v = averageVoltage();
+    //Serial.println(v);
+    float total = analogRead(analogInPin);
+    digitalWrite(pin[i],LOW);     
+    pinMode(pin[i], INPUT);
+  }
 }
 
 // take SAMPLE_COUNT succesive readings of the voltage and average them
@@ -87,7 +99,7 @@ void loop() {
 
    if (mode == 0){
      for (int i=0; i<PIN_COUNT; i++) {  
-       //clearem(); 
+       digitalWrite(11,LOW);
        pinMode(pin[i], OUTPUT);
        digitalWrite(pin[i],HIGH);
        float v = averageVoltage();
@@ -114,6 +126,7 @@ void loop() {
      delay(100);
    }
    else{
+     digitalWrite(13, LOW);
      pinMode(7, OUTPUT);
      digitalWrite(7,HIGH);
      float v = averageVoltage();
